@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Leaderboard</h2>
+
+<select id="metricSelect">
+    <option value="study_time">Study Time</option>
+    <option value="points">Points</option>
+    <option value="current_streak">Current Streak</option>
+    <option value="longest_streak">Longest Streak</option>
+</select>
+
+<select id="modeSelect">
+    <option value="all_time">All Time</option>
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+</select>
+
+<div id="leaderboardContainer"></div>
+
+<script>
+const metricSelect = document.getElementById("metricSelect");
+const modeSelect = document.getElementById("modeSelect");
+
+function updateModeVisibility() {
+    const metric = metricSelect.value;
+
+    if (metric === "current_streak" || metric === "longest_streak") {
+        modeSelect.style.display = "none";
+    } else {
+        modeSelect.style.display = "inline-block";
+    }
+}
+
+function loadLeaderboard() {
+
+    const metric = metricSelect.value;
+    const mode = modeSelect.value;
+
+    let url = `/leaderboard/api/?metric=${metric}`;
+
+    // Only send mode if metric supports it
+    if (!(metric === "current_streak" || metric === "longest_streak")) {
+        url += `&mode=${mode}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+
+            let html = "<h3>Top 10</h3><ol>";
+
+            data.top_10.forEach(entry => {
+                html += `<li>${entry.username} - ${entry.value}</li>`;
+            });
+
+            html += "</ol>";
+
+            html += `<h4>Your Rank: ${data.your_rank}</h4>`;
+            html += `<p>Your Score: ${data.your_data.value}</p>`;
+
+            document.getElementById("leaderboardContainer").innerHTML = html;
+        });
+}
+
+metricSelect.addEventListener("change", () => {
+    updateModeVisibility();
+    loadLeaderboard();
+});
+
+modeSelect.addEventListener("change", loadLeaderboard);
+
+updateModeVisibility();
+loadLeaderboard();
+</script>
+
+{% endblock %}

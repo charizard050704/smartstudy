@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>🌳 Your Forest</h1>
+
+<div class="forest-container">
+    {% for tree in trees %}
+        <div class="tree-wrapper"
+            style="
+                left: {{ tree.pos_x }}%;
+                top: {{ tree.pos_y }}%;
+                z-index: {{ tree.depth_layer }};
+            ">
+
+            <div class="tree {{ tree.status }} {% if tree.is_protected %}protected{% endif %}"
+                onclick="showTreeInfo(
+                    '{{ tree.status|escapejs }}',
+                    '{{ tree.species|escapejs }}',
+                    '{{ tree.created_at|date:'M d, Y' }}',
+                    '{{ tree.subject.name|escapejs }}',
+                    '{{ tree.is_protected }}',
+                    '{{ tree.growth_stage }}'
+                )"
+                style="
+                    transform: scale({{ tree.growth_stage|default:1 }});
+                ">
+                <div class="trunk"></div>
+            </div>
+        </div>
+    {% empty %}
+        <p>No trees yet. Complete tasks to grow your forest.</p>
+    {% endfor %}
+</div>
+<div id="treeInfoPopup" style="
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background: linear-gradient(to top, #a5d6a7, #dcedc8);    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    z-index:20000;
+    width:300px;
+">
+    <h3>🌳 Tree Details</h3>
+    <p id="treeInfoContent"></p>
+    <button class="btn btn-primary" onclick="closeTreeInfo()">Close</button>
+</div>
+
+<script>
+function showTreeInfo(status, species, date, subject, protectedStatus, growth) {
+
+    let content = `
+        <strong>Tier:</strong> ${status}<br>
+        <strong>Species:</strong> ${species}<br>
+        <strong>Planted:</strong> ${date}<br>
+        <strong>Subject:</strong> ${subject}<br>
+        <strong>Growth:</strong> ${growth}<br>
+        <strong>Protected:</strong> ${protectedStatus}
+    `;
+
+    document.getElementById("treeInfoContent").innerHTML = content;
+    document.getElementById("treeInfoPopup").style.display = "block";
+}
+
+function closeTreeInfo() {
+    document.getElementById("treeInfoPopup").style.display = "none";
+}
+</script>
+
+{% endblock %}

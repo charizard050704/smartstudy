@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Dashboard</h1>
+
+<div class="card">
+    <div class="flex">
+        <div>
+            <div class="card-title">Current Streak</div>
+            <div>{{ user.userprofile.current_streak }} days</div>
+        </div>
+        <div>
+            <div class="card-title">Longest Streak</div>
+            <div>{{ user.userprofile.longest_streak }} days</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Actions</div>
+
+    <button class="btn btn-primary" onclick="generatePlan()">Generate Plan</button>
+
+    <a href="/leaderboard/" class="btn btn-primary" style="margin-left:10px;">
+        View Leaderboard
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-title">Your Study Plans</div>
+
+    {% if plans %}
+        {% for plan in plans %}
+            <div class="flex" style="margin-bottom:12px;">
+                <div>
+                    {{ plan.date }} —
+                    {{ plan.subject.name }} —
+                    {{ plan.allocated_hours }} hrs
+                </div>
+
+                {% if not plan.completed %}
+                    <button class="btn btn-primary"
+                            onclick="completePlan({{ plan.id }})">
+                        Complete
+                    </button>
+                {% else %}
+                    <span class="muted">Completed</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="muted">No study plans yet.</div>
+    {% endif %}
+</div>
+
+<script>
+    function generatePlan() {
+        fetch("/generate-plan/")
+            .then(response => response.json())
+            .then(data => {
+                alert("Plan Generated");
+                location.reload();
+            });
+    }
+
+    function completePlan(planId) {
+        fetch(`/complete/${planId}/`)
+            .then(response => response.json())
+            .then(data => {
+                alert("Plan Completed");
+                location.reload();
+            });
+    }
+</script>
+
+{% endblock %}

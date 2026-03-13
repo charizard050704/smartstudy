@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartStudy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --primary: #2f7d4f;
+            --primary-dark: #1f5a37;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-dark: #1e1e1e;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #e53935;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-dark);
+        }
+
+        /* ---------------- NAVBAR ---------------- */
+
+        .navbar {
+            background-color: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-left {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .navbar-right a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .navbar-right a:hover {
+            color: var(--primary);
+        }
+
+        /* ---------------- CONTAINER ---------------- */
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* ---------------- CARDS ---------------- */
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        /* ---------------- BUTTONS ---------------- */
+
+        .btn {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.85;
+        }
+
+        /* ---------------- UTILITIES ---------------- */
+
+        .muted {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ---------------- TUTORIAL SPOTLIGHT ---------------- */
+
+        .tutorial-highlight {
+            position: relative;
+            z-index: 10001 !important;
+            background: white !important;
+            border-radius: 10px;
+            animation: glowPulse 1.5s infinite;
+        }
+
+        @keyframes glowPulse {
+            0% {
+                box-shadow:
+                    0 0 0 4px #ffffff,
+                    0 0 0 8px rgba(47,125,79,0.7),
+                    0 0 20px rgba(47,125,79,0.8);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 4px #ffffff,
+                    0 0 0 10px rgba(47,125,79,0.9),
+                    0 0 30px rgba(47,125,79,1);
+            }
+            100% {
+                box-shadow:
+                    0 0 0 4px #ffffff,
+                    0 0 0 8px rgba(47,125,79,0.7),
+                    0 0 20px rgba(47,125,79,0.8);
+            }
+        }
+
+        #mascotPanel {
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        #mascotPanel.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* ---------------- FOREST ---------------- */
+
+        .forest-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(to top, #c8e6c9, #e8f5e9);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .tree-wrapper {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+
+        .tree {
+            position: relative;
+        }
+
+        .tree .trunk {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 8px;
+            height: 14px;
+            background: #6d4c41;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* Tree crown */
+        .tree::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Tree tiers */
+
+        .tree.healthy::before {
+            background: #4caf50;
+        }
+
+        .tree.rare::before {
+            background: #2196f3;
+        }
+
+        .tree.epic::before {
+            background: #9c27b0;
+        }
+
+        /* Legendary Aura */
+        .tree.legendary::before {
+            background: gold;
+            animation: legendaryPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes legendaryPulse {
+            0% { box-shadow: 0 0 10px gold; }
+            50% { box-shadow: 0 0 25px gold; }
+            100% { box-shadow: 0 0 10px gold; }
+        }
+
+        /* Mythic Aura */
+        .tree.mythic::before {
+            background: red;
+            animation: mythicPulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes mythicPulse {
+            0% { box-shadow: 0 0 20px red; }
+            50% { box-shadow: 0 0 40px red; }
+            100% { box-shadow: 0 0 20px red; }
+        }
+
+        .tree.dry::before {
+            background: #8d6e63;
+        }
+
+        .tree.cut::before {
+            background: #5d4037;
+        }
+
+        /* ---------------- TREE SPAWN ANIMATION ---------------- */
+
+        @keyframes treeSpawn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .tree {
+            animation: treeSpawn 0.4s ease-out;
+        }
+
+        .tree.protected::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            border: 2px solid rgba(0, 200, 255, 0.8);
+            animation: shieldPulse 2s infinite;
+        }
+
+        @keyframes shieldPulse {
+            0% { box-shadow: 0 0 5px rgba(0,200,255,0.5); }
+            50% { box-shadow: 0 0 20px rgba(0,200,255,1); }
+            100% { box-shadow: 0 0 5px rgba(0,200,255,0.5); }
+        }
+
+        .tree-wrapper .tree.epic,
+        .tree-wrapper .tree.legendary,
+        .tree-wrapper .tree.mythic {
+            animation: treeSpawn 0.4s ease-out, floatTree 4s ease-in-out infinite;
+        }
+
+        @keyframes floatTree {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <div class="navbar-left">
+            🌳 SmartStudy
+        </div>
+        <div class="navbar-right">
+            <a href="/">Dashboard</a>
+            <a href="/forest/">Forest</a>
+            <a href="/forest/index/">Collection</a>
+            <a href="/leaderboard/">Leaderboard</a>
+
+            <form method="post" action="/logout/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" style="padding:6px 12px; margin-left:15px;">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+<!-- Tutorial Overlay -->
+<div id="tutorialOverlay" style="
+    opacity:0;
+    pointer-events:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:9999;
+    transition: opacity 0.3s ease;
+">
+</div>
+
+<div id="mascotPanel" style="
+    display:none;
+    position:fixed;
+    width:320px;
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    z-index:10000;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+">
+    <div style="font-weight:600; margin-bottom:8px;">
+        🌳 Forest Spirit
+    </div>
+
+    <div id="mascotMessage" style="margin-bottom:12px; font-size:14px;">
+    </div>
+
+    <div style="text-align:right;">
+        <button id="tutorialNextBtn" class="btn btn-primary">
+            Next
+        </button>
+        <button id="tutorialSkipBtn" class="btn btn-danger" style="margin-left:8px;">
+            Skip
+        </button>
+    </div>
+</div>
+
+<script>
+
+let tutorialSteps = [
+    {
+        selector: ".navbar-left",
+        message: "Welcome to SmartStudy. I am your Forest Spirit."
+    },
+    {
+        selector: ".card:nth-of-type(1)",
+        message: "This shows your streak. Stay consistent."
+    },
+    {
+        selector: ".card:nth-of-type(2)",
+        message: "Generate plans here to begin your mission."
+    },
+    {
+        selector: ".navbar-right a[href='/leaderboard/']",
+        message: "Compete here. Climb ranks. Unlock Mythic tier."
+    }
+];
+
+let currentStep = 0;
+
+function startTutorial() {
+    let overlay = document.getElementById("tutorialOverlay");
+    overlay.style.pointerEvents = "auto";
+    overlay.style.opacity = "1";
+    let panel = document.getElementById("mascotPanel");
+    panel.style.display = "block";
+    setTimeout(() => panel.classList.add("active"), 10);
+    showStep();
+}
+
+function showStep() {
+
+    // Remove previous highlight
+    document.querySelectorAll(".tutorial-highlight").forEach(el => {
+        el.classList.remove("tutorial-highlight");
+    });
+
+    let step = tutorialSteps[currentStep];
+    let target = document.querySelector(step.selector);
+
+    if (target) {
+        target.classList.add("tutorial-highlight");
+
+        target.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+        let rect = target.getBoundingClientRect();
+        let panel = document.getElementById("mascotPanel");
+
+        let panelTop = rect.bottom + 20;
+        let panelLeft = rect.left;
+
+        if (panelTop + panel.offsetHeight > window.innerHeight) {
+            panelTop = rect.top - panel.offsetHeight - 20;
+        }
+
+        if (panelLeft + panel.offsetWidth > window.innerWidth) {
+            panelLeft = window.innerWidth - panel.offsetWidth - 20;
+        }
+
+        if (panelLeft < 20) {
+            panelLeft = 20;
+        }
+
+        if (panelTop < 20) {
+            panelTop = 20;
+        }
+
+        panel.style.top = panelTop + "px";
+        panel.style.left = panelLeft + "px";
+    }
+
+    document.getElementById("mascotMessage").innerText = step.message;
+}
+
+function nextStep() {
+    document.querySelectorAll(".tutorial-highlight").forEach(el => {
+    el.classList.remove("tutorial-highlight");
+    });
+    currentStep++;
+    if (currentStep >= tutorialSteps.length) {
+        endTutorial();
+    } else {
+        showStep();
+    }
+}
+
+function endTutorial() {
+
+    // Remove highlight from all elements
+    document.querySelectorAll(".tutorial-highlight").forEach(el => {
+        el.classList.remove("tutorial-highlight");
+    });
+
+    let overlay = document.getElementById("tutorialOverlay");
+    overlay.style.opacity = "0";
+    overlay.style.pointerEvents = "none";
+    let panel = document.getElementById("mascotPanel");
+    panel.classList.remove("active");
+    setTimeout(() => panel.style.display = "none", 300);
+
+    fetch("/tutorial-complete/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.getElementById("tutorialNextBtn").onclick = nextStep;
+document.getElementById("tutorialSkipBtn").onclick = endTutorial;
+
+window.onload = function() {
+    {% if user.is_authenticated and not user.userprofile.has_completed_tutorial %}
+        startTutorial();
+    {% endif %}
+};
+
+</script>
+
+</body>
+</html>
