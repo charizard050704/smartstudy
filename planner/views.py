@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+import json
 from .models import StudyPlan
 from planner.services.scheduler import generate_plan
 from planner.services.completion_engine import complete_studyplan
@@ -57,10 +58,22 @@ def tutorial_complete(request):
 
 @login_required
 def forest_view(request):
+
     trees = ForestTree.objects.filter(user=request.user)
 
+    tree_data = []
+
+    for t in trees:
+        tree_data.append({
+            "species": t.species,
+            "pos_x": t.pos_x,
+            "pos_y": t.pos_y,
+            "growth": t.growth_stage
+        })
+
     return render(request, "planner/forest.html", {
-        "trees": trees
+        "trees": trees,
+        "tree_json": json.dumps(tree_data)
     })
 
 TREE_SPECIES = {
