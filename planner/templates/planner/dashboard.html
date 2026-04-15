@@ -19,7 +19,71 @@
 <div class="card">
     <div class="card-title">Actions</div>
 
-    <button class="btn btn-primary" onclick="generatePlan()">Generate Plan</button>
+    <form id="planForm" onsubmit="submitPlan(event)">
+
+        <select name="subject" required class="btn">
+            <option value="">Select Subject</option>
+            <option value="Math">Math</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+        </select>
+
+        <select name="difficulty" required class="btn">
+            <option value="">Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+
+        <input type="date" name="exam_date" required class="btn">
+
+        <button type="submit" class="btn btn-primary">
+            Generate Plan
+        </button>
+
+    </form>
+
+<button class="btn btn-primary" onclick="openModal()">
+    Generate Plan
+</button>
+
+<div id="planModal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+">
+
+    <div style="
+        background:white;
+        padding:20px;
+        border-radius:12px;
+        width:400px;
+    ">
+
+        <h3>Add Subjects</h3>
+
+        <div id="subjectsContainer"></div>
+
+        <button onclick="addSubjectRow()" class="btn btn-primary">
+            + Add Subject
+        </button>
+
+        <br><br>
+
+        <button onclick="submitAllSubjects()" class="btn btn-primary">
+            Generate Plan
+        </button>
+
+        <button onclick="closeModal()" class="btn" style="margin-left:10px;">
+            Cancel
+        </button>
+
+    </div>
+</div>
 
     <a href="/leaderboard/" class="btn btn-primary" style="margin-left:10px;">
         View Leaderboard
@@ -53,24 +117,154 @@
     {% endif %}
 </div>
 
-<script>
-    function generatePlan() {
-        fetch("/generate-plan/")
-            .then(response => response.json())
-            .then(data => {
-                alert("Plan Generated");
-                location.reload();
-            });
-    }
+<!-- RESULT BOX -->
+<div id="resultBox" class="card" style="display:none;"></div>
 
-    function completePlan(planId) {
-        fetch(`/complete/${planId}/`)
-            .then(response => response.json())
-            .then(data => {
-                alert("Plan Completed");
-                location.reload();
-            });
-    }
+<script>
+
+function showResult(html) {
+    const box = document.getElementById("resultBox");
+    box.style.display = "block";
+    box.innerHTML = html;
+}
+
+function submitPlan(e) {
+    e.preventDefault();
+
+    const form = document.getElementById("planForm");
+    const formData = new FormData(form);
+
+    fetch("/generate-plan/", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "plan_generated") {
+            showResult("✅ Plan generated successfully");
+            setTimeout(() => location.reload(), 1000);
+
+        } else if (data.status === "overloaded") {
+            showResult(`⚠️ Overloaded! Required: ${data.total_required}, Capacity: ${data.total_capacity}`);
+
+        } else if (data.status === "no_subjects") {
+            showResult("❌ No subjects found");
+
+        } else {
+            showResult("❌ Failed to generate plan");
+        }
+    })
+    .catch(() => {
+        showResult("❌ Server error");
+    });
+}
+
+function openModal() {
+    document.getElementById("planModal").style.display = "flex";
+    document.getElementById("subjectsContainer").innerHTML = "";
+    addSubjectRow();
+}
+
+function closeModal() {
+    document.getElementById("planModal").style.display = "none";
+}
+
+function addSubjectRow() {
+
+    const container = document.getElementById("subjectsContainer");
+
+    const row = document.createElement("div");
+    row.style.marginBottom = "10px";
+
+    row.innerHTML = `
+        <input type="text" placeholder="Subject">
+        <select>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+        <input type="date">
+    `;
+
+    container.appendChild(row);
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function submitAllSubjects() {
+
+    const rows = document.querySelectorAll("#subjectsContainer div");
+
+    let subjects = [];
+
+    rows.forEach(row => {
+        const inputs = row.querySelectorAll("input, select");
+
+        subjects.push({
+            subject: inputs[0].value,
+            difficulty: inputs[1].value,
+            exam_date: inputs[2].value
+        });
+    });
+
+    fetch("/generate-plan/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify({ subjects: subjects })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "plan_generated") {
+            showResult("✅ Plan generated!");
+            closeModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showResult("❌ Failed to generate plan");
+        }
+    });
+}
+
+function completePlan(planId) {
+
+    fetch(`/complete/${planId}/`, {
+        method: "POST"
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "completed") {
+
+            showResult(`
+                ✅ Completed! <br><br>
+                ⭐ Points: ${data.points_awarded} <br>
+                🔥 Streak: ${data.streak.current_streak}
+            `);
+
+            setTimeout(() => location.reload(), 1500);
+
+        } else if (data.status === "blocked") {
+
+            showResult(`
+                ❌ Cannot complete<br><br>
+                Reason: ${data.reason}
+            `);
+
+        } else {
+            showResult("⚠️ Unexpected response");
+        }
+    })
+    .catch(() => {
+        showResult("❌ Error completing task");
+    });
+}
+
 </script>
 
 {% endblock %}

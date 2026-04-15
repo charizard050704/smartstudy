@@ -1,39 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>🌳 Tree Collection</h1>
+<h1>🌳 Your Tree Collection</h1>
 
 {% for tier, trees in collection.items %}
 
 <div class="card">
 
-<h2 style="text-transform:capitalize;">
-    {{ tier }} Trees
-</h2>
+    <h2 style="text-transform:capitalize; margin-bottom:15px;">
+        {{ tier }} Trees
+    </h2>
 
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
 
-{% for tree in trees %}
+        {% for tree in trees %}
 
-<div style="
-    padding:10px;
-    border-radius:10px;
-    border:1px solid #ddd;
-    text-align:center;
-    background:{% if tree.owned %}#e8f5e9{% else %}#eeeeee{% endif %};
-">
+        <div style="
+            padding:14px;
+            border-radius:12px;
+            border:1px solid #ddd;
+            text-align:center;
+            transition:0.2s;
+            position:relative;
+            {% if tree.owned %}
+                background:#e8f5e9;
+            {% else %}
+                background:#eeeeee;
+                opacity:0.6;
+            {% endif %}
+        "
+        onmouseover="this.style.transform='scale(1.05)'"
+        onmouseout="this.style.transform='scale(1)'"
+        >
 
-{% if tree.owned %}
-🌳 {{ tree.name }}
-{% else %}
-❓ Unknown
-{% endif %}
+            {% if tree.owned %}
+                <div style="font-size:22px;">🌳</div>
+                <div style="margin-top:6px; font-weight:500;">
+                    {{ tree.name|title }}
+                </div>
+            {% else %}
+                <div style="font-size:22px;">❓</div>
+                <div class="muted" style="margin-top:6px;">
+                    Unknown
+                </div>
+            {% endif %}
 
-</div>
+        </div>
 
-{% endfor %}
+        {% endfor %}
 
-</div>
+    </div>
 
 </div>
 

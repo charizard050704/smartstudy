@@ -335,6 +335,7 @@
 <div id="tutorialOverlay" style="
     opacity:0;
     pointer-events:none;
+    backdrop-filter: blur(4px);
     position:fixed;
     inset:0;
     background:rgba(0,0,0,0.6);
@@ -395,7 +396,7 @@ let currentStep = 0;
 
 function startTutorial() {
     let overlay = document.getElementById("tutorialOverlay");
-    overlay.style.pointerEvents = "auto";
+    overlay.style.pointerEvents = "none";
     overlay.style.opacity = "1";
     let panel = document.getElementById("mascotPanel");
     panel.style.display = "block";
@@ -420,6 +421,10 @@ function showStep() {
             behavior: "smooth",
             block: "center"
         });
+
+        setTimeout(() => {
+            target.classList.add("tutorial-highlight");
+        }, 200);
 
         let rect = target.getBoundingClientRect();
         let panel = document.getElementById("mascotPanel");
@@ -474,6 +479,11 @@ function endTutorial() {
     overlay.style.pointerEvents = "none";
     let panel = document.getElementById("mascotPanel");
     panel.classList.remove("active");
+    setTimeout(() => {
+        document.querySelectorAll(".tutorial-highlight").forEach(el => {
+            el.classList.remove("tutorial-highlight");
+        });
+    }, 300);
     setTimeout(() => panel.style.display = "none", 300);
 
     fetch("/tutorial-complete/", {

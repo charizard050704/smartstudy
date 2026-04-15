@@ -1,7 +1,6 @@
 import random
 from datetime import date
-from planner.models import ForestTree
-
+from planner.models import ForestTree, UserInventoryTree
 
 MAX_TREES = 33
 
@@ -20,8 +19,8 @@ TREE_SPECIES = {
     "legendary": ["giant_sequoia", "methuselah_pine", "rainbow_eucalyptus"],
 
     "mythic": ["yggdrasil", "kalpavriksha", "world_tree"]
-
 }
+
 
 def determine_tree_status(user):
     """
@@ -40,85 +39,83 @@ def determine_tree_status(user):
 
 
 def assign_depth_layer():
-    """
-    Weighted depth distribution.
-    """
     return random.choices(
         population=[1, 2, 3],
         weights=[0.4, 0.35, 0.25],
         k=1
     )[0]
 
+
 def choose_species(status):
-    """
-    Select species from the rarity pool.
-    """
     pool = TREE_SPECIES.get(status, ["oak"])
     return random.choice(pool)
 
+
+# --------------------------------
+# PRUNING LOGIC (FIXED)
+# --------------------------------
+
 def prune_forest_if_needed(user):
-    """
-    If forest exceeds limit, prune oldest tree.
-    Epic/Legendary may be saved to inventory.
-    """
 
-    from planner.models import UserInventoryTree
-
-    trees = ForestTree.objects.filter(user=user).order_by("planted_date")
+    trees = ForestTree.objects.filter(user=user)
 
     if trees.count() < MAX_TREES:
         return
 
     profile = user.userprofile
 
+    # ❗ exclude mythic BEFORE sorting
+    trees = trees.exclude(status="mythic").order_by("planted_date")
+
     for tree in trees:
 
-        # Mythic never pruned
-        if tree.status == "mythic":
-            continue
-
-        # Healthy, Rare, Cut, Dry → delete
+        # 🟢 delete simple trees
         if tree.status in ["healthy", "rare", "cut", "dry"]:
             tree.delete()
             return
 
-        # Epic
+        # 🟣 EPIC → inventory
         if tree.status == "epic":
             if profile.save_epic:
                 inventory, _ = UserInventoryTree.objects.get_or_create(
                     user=user,
-                    tree_type="epic"
+                    tree_type="epic",
+                    species=tree.species
                 )
                 inventory.quantity += 1
                 inventory.total_earned += 1
                 inventory.save()
+
             tree.delete()
             return
 
-        # Legendary
+        # 🟡 LEGENDARY → inventory
         if tree.status == "legendary":
             if profile.save_legendary:
                 inventory, _ = UserInventoryTree.objects.get_or_create(
                     user=user,
-                    tree_type="legendary"
+                    tree_type="legendary",
+                    species=tree.species
                 )
                 inventory.quantity += 1
                 inventory.total_earned += 1
                 inventory.save()
+
             tree.delete()
             return
 
 
+# --------------------------------
+# TREE CREATION
+# --------------------------------
+
 def plant_tree(user):
-    """
-    Plant new tree after productive day.
-    """
 
     prune_forest_if_needed(user)
 
     status = determine_tree_status(user)
     species = choose_species(status)
-    
+
     new_tree = ForestTree.objects.create(
         user=user,
         planted_date=date.today(),
@@ -129,7 +126,7 @@ def plant_tree(user):
         pos_y=round(random.uniform(0, 100), 2),
         depth_layer=assign_depth_layer(),
         growth_stage=0,
-        is_protected=(status == "mythic")
+        is_protected=False  # ✅ removed old logic
     )
 
     return {

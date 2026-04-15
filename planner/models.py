@@ -171,7 +171,11 @@ class UserInventoryTree(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    # rarity
     tree_type = models.CharField(max_length=20, choices=TREE_TYPE_CHOICES)
+
+    # ✅ NEW: actual tree species
+    species = models.CharField(max_length=50)
 
     quantity = models.IntegerField(default=0)
     total_earned = models.IntegerField(default=0)
@@ -179,11 +183,11 @@ class UserInventoryTree(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("user", "tree_type")
+        # ✅ updated uniqueness
+        unique_together = ("user", "tree_type", "species")
 
     def __str__(self):
-        return f"{self.user.username} - {self.tree_type} x{self.quantity}"
-
+        return f"{self.user.username} - {self.species} ({self.tree_type}) x{self.quantity}"
 
 # ----------------------------
 # INTEGRITY LOG

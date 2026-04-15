@@ -11,7 +11,7 @@ MYTHIC_SPECIES = [
 
 def check_and_update_mythic(user):
     """
-    Grant or revoke mythic tree based on Top 3 all-time points leaderboard.
+    Grant or downgrade mythic tree based on Top 3 all-time leaderboard.
     """
 
     leaderboard = build_leaderboard(metric="points", mode="all_time")
@@ -28,7 +28,7 @@ def check_and_update_mythic(user):
         status="mythic"
     ).exists()
 
-    # Grant mythic if top 3
+    # 🟢 GRANT MYTHIC
     if rank and rank <= 3:
         if not has_mythic:
             ForestTree.objects.create(
@@ -36,24 +36,24 @@ def check_and_update_mythic(user):
                 status="mythic",
                 species=random.choice(MYTHIC_SPECIES),
                 tree_type="mythic",
-                pos_x=50,
-                pos_y=50,
+                pos_x=random.uniform(40, 60),   # ✅ FIXED
+                pos_y=random.uniform(40, 60),
                 depth_layer=1,
                 growth_stage=3,
-                is_protected=True
+                is_protected=False
             )
             return {"status": "mythic_granted", "rank": rank}
 
         return {"status": "mythic_retained", "rank": rank}
 
-    # Remove mythic if rank dropped
+    # 🔴 DOWNGRADE (NOT DELETE)
     else:
         if has_mythic:
             ForestTree.objects.filter(
                 user=user,
                 status="mythic"
-            ).delete()
+            ).update(status="legendary")
 
-            return {"status": "mythic_revoked", "rank": rank}
+            return {"status": "mythic_downgraded", "rank": rank}
 
     return {"status": "no_mythic_change", "rank": rank}

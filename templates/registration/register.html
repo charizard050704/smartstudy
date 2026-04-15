@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - SmartStudy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(to right, #e8f5e9, #f1f8e9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2f7d4f;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input {
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #2f7d4f;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1f5a37;
+        }
+
+        .extra {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .extra a {
+            color: #2f7d4f;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .extra a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="title">🌳 Create Account</div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div style="color:red;">
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        {{ form.username.label_tag }}
+        {{ form.username }}
+
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+
+        <button type="submit">Register</button>
+    </form>
+
+    <div class="extra">
+        Already have an account?
+        <a href="/login/">Login</a>
+    </div>
+
+</div>
+
+</body>
+</html>

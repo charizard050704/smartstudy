@@ -1,25 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Leaderboard</h2>
+<h2>🏆 Leaderboard</h2>
 
-<select id="metricSelect">
-    <option value="study_time">Study Time</option>
-    <option value="points">Points</option>
-    <option value="current_streak">Current Streak</option>
-    <option value="longest_streak">Longest Streak</option>
-</select>
+<div class="card">
+    <div class="flex" style="gap:10px;">
 
-<select id="modeSelect">
-    <option value="all_time">All Time</option>
-    <option value="daily">Daily</option>
-    <option value="weekly">Weekly</option>
-    <option value="monthly">Monthly</option>
-</select>
+        <select id="metricSelect" class="btn">
+            <option value="study_time">Study Time</option>
+            <option value="points">Points</option>
+            <option value="current_streak">Current Streak</option>
+            <option value="longest_streak">Longest Streak</option>
+        </select>
+
+        <select id="modeSelect" class="btn">
+            <option value="all_time">All Time</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+        </select>
+
+    </div>
+</div>
 
 <div id="leaderboardContainer"></div>
 
 <script>
+
 const metricSelect = document.getElementById("metricSelect");
 const modeSelect = document.getElementById("modeSelect");
 
@@ -40,27 +47,55 @@ function loadLeaderboard() {
 
     let url = `/leaderboard/api/?metric=${metric}`;
 
-    // Only send mode if metric supports it
     if (!(metric === "current_streak" || metric === "longest_streak")) {
         url += `&mode=${mode}`;
     }
 
+    document.getElementById("leaderboardContainer").innerHTML = "Loading...";
+
     fetch(url)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
 
-            let html = "<h3>Top 10</h3><ol>";
+            let html = `
+                <div class="card">
+                    <h3>Top 10</h3>
+                    <div>
+            `;
 
-            data.top_10.forEach(entry => {
-                html += `<li>${entry.username} - ${entry.value}</li>`;
+            data.top_10.forEach((entry, index) => {
+
+                let highlight = entry.username === data.current_user ? "background:#e8f5e9;" : "";
+
+                html += `
+                    <div style="
+                        padding:10px;
+                        margin-bottom:6px;
+                        border-radius:8px;
+                        border:1px solid #ddd;
+                        display:flex;
+                        justify-content:space-between;
+                        ${highlight}
+                    ">
+                        <div>#${index+1} — ${entry.username}</div>
+                        <div>${entry.value}</div>
+                    </div>
+                `;
             });
 
-            html += "</ol>";
+            html += `</div></div>`;
 
-            html += `<h4>Your Rank: ${data.your_rank}</h4>`;
-            html += `<p>Your Score: ${data.your_data.value}</p>`;
+            html += `
+                <div class="card">
+                    <h4>Your Rank: ${data.your_rank}</h4>
+                    <p>Your Score: ${data.your_data.value}</p>
+                </div>
+            `;
 
             document.getElementById("leaderboardContainer").innerHTML = html;
+        })
+        .catch(() => {
+            document.getElementById("leaderboardContainer").innerHTML = "❌ Failed to load leaderboard";
         });
 }
 
@@ -73,6 +108,7 @@ modeSelect.addEventListener("change", loadLeaderboard);
 
 updateModeVisibility();
 loadLeaderboard();
+
 </script>
 
 {% endblock %}

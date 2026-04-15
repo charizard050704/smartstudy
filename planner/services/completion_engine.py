@@ -1,10 +1,9 @@
 from django.utils import timezone
+from django.db import transaction
 from planner.services.integrity_engine import can_complete
 from planner.services.streak_engine import update_streak
 from planner.services.forest_engine import plant_tree
-from planner.models import StudyPlan
 from planner.services.rewards_engine import check_and_update_mythic
-
 
 
 def calculate_points(studyplan):
@@ -13,9 +12,10 @@ def calculate_points(studyplan):
     """
     base = studyplan.allocated_hours * 10
     difficulty_bonus = studyplan.priority_score * 5
-    return int(round(base + difficulty_bonus))
+    return int(base + difficulty_bonus)
 
 
+@transaction.atomic
 def complete_studyplan(studyplan):
     """
     Master completion handler.
@@ -46,11 +46,13 @@ def complete_studyplan(studyplan):
     profile.total_points += points
     profile.save()
 
-    # Update streak
+    # ✅ IMPORTANT: Update streak FIRST
     streak_result = update_streak(studyplan.user)
 
-    # Plant tree
+    # Then plant tree
     forest_result = plant_tree(studyplan.user)
+
+    # Then mythic update
     mythic_result = check_and_update_mythic(studyplan.user)
 
     return {

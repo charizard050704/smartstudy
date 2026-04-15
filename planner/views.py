@@ -7,6 +7,49 @@ from planner.services.scheduler import generate_plan
 from planner.services.completion_engine import complete_studyplan
 from planner.services.leaderboard_engine import get_top_and_rank
 from planner.models import ForestTree
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from datetime import datetime
+
+def register_view(request):
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+            user = form.save()
+            print("USER CREATED:", user.username)   # 🔥 DEBUG
+            return redirect("/login/")
+
+        else:
+            print("FORM ERRORS:", form.errors)      # 🔥 VERY IMPORTANT
+
+    else:
+        form = UserCreationForm()
+
+    return render(request, "registration/register.html", {
+        "form": form
+    })
+
+def login_view(request):
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("/dashboard/")   # 🔥 FORCE REDIRECT
+
+        else:
+            return render(request, "login.html", {
+                "error": "Invalid username or password"
+            })
+
+    return render(request, "login.html")
 
 @login_required
 def dashboard(request):
@@ -19,9 +62,54 @@ def dashboard(request):
 
 @login_required
 def generate_plan_view(request):
-    result = generate_plan(request.user)
-    return JsonResponse(result)
 
+    if request.method == "POST":
+
+        subject_name = request.POST.get("subject")
+        difficulty = request.POST.get("difficulty")
+        exam_date = request.POST.get("exam_date")
+
+        if not subject_name or not difficulty or not exam_date:
+            return JsonResponse({"status": "invalid_input"}, status=400)
+
+        # Convert difficulty
+        difficulty_map = {
+            "easy": 1,
+            "medium": 2,
+            "hard": 3
+        }
+
+        difficulty_value = difficulty_map.get(difficulty, 2)
+
+        # Convert date
+        deadline = datetime.strptime(exam_date, "%Y-%m-%d").date()
+
+        # ✅ CREATE SUBJECT
+        subject, created = Subject.objects.get_or_create(
+            user=request.user,
+            name=subject_name,
+            defaults={
+                "difficulty": difficulty_value,
+                "deadline": deadline,
+                "total_topics": 10,
+                "completed_topics": 0,
+                "is_active": True
+            }
+        )
+
+        # If already exists → update it
+        if not created:
+            subject.difficulty = difficulty_value
+            subject.deadline = deadline
+            subject.is_active = True
+            subject.save()
+
+        # ✅ NOW RUN SCHEDULER
+        result = generate_plan(request.user)
+
+        return JsonResponse(result)
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
 
 @login_required
 def complete_plan_view(request, plan_id):
@@ -44,7 +132,7 @@ def leaderboard_api(request):
         metric=metric,
         mode=mode
     )
-
+    data["current_user"] = request.user.username
     return JsonResponse(data)
 
 @login_required
@@ -112,3 +200,4 @@ def tree_index(request):
     return render(request, "planner/tree_index.html", {
         "collection": collection
     })
+    
