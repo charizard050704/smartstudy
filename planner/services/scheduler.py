@@ -89,12 +89,10 @@ def generate_plan(user, force_generate=False):
 
     capacity_info = check_capacity(user, subject_data, daily_capacity)
 
-    if capacity_info["overloaded"] and not force_generate:
-        return {
-            "status": "overloaded",
-            "total_required": capacity_info["total_required"],
-            "total_capacity": capacity_info["total_capacity"]
-        }
+    if capacity_info["overloaded"]:
+        scale_factor = capacity_info["total_capacity"] / capacity_info["total_required"]
+        for item in subject_data:
+            item["remaining_hours"] *= scale_factor
 
     total_priority = sum(item["priority"] for item in subject_data)
 
@@ -136,7 +134,8 @@ def generate_plan(user, force_generate=False):
                     subject=item["subject"],
                     date=current_date,
                     allocated_hours=round(allocated_hours, 2),
-                    priority_score=item["priority"]
+                    priority_score=item["priority"],
+                    generation_timestamp=timezone.now()
                 )
 
                 item["remaining_hours"] -= allocated_hours

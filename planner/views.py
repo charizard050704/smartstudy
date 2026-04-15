@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import json
-from .models import StudyPlan
+from .models import StudyPlan,Subject
 from planner.services.scheduler import generate_plan
 from planner.services.completion_engine import complete_studyplan
 from planner.services.leaderboard_engine import get_top_and_rank
@@ -10,7 +10,7 @@ from planner.models import ForestTree
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from datetime import datetime
+from datetime import datetime,timedelta
 
 def register_view(request):
 
@@ -59,54 +59,46 @@ def dashboard(request):
         "plans": plans
     })
 
-
 @login_required
 def generate_plan_view(request):
 
     if request.method == "POST":
 
-        subject_name = request.POST.get("subject")
-        difficulty = request.POST.get("difficulty")
-        exam_date = request.POST.get("exam_date")
+        data = json.loads(request.body)
+        subjects = data.get("subjects", [])
 
-        if not subject_name or not difficulty or not exam_date:
-            return JsonResponse({"status": "invalid_input"}, status=400)
+        for item in subjects:
 
-        # Convert difficulty
-        difficulty_map = {
-            "easy": 1,
-            "medium": 2,
-            "hard": 3
-        }
+            subject_name = item.get("subject")
+            difficulty = item.get("difficulty")
+            exam_date = item.get("exam_date")
 
-        difficulty_value = difficulty_map.get(difficulty, 2)
+            if not subject_name or not exam_date:
+                continue
 
-        # Convert date
-        deadline = datetime.strptime(exam_date, "%Y-%m-%d").date()
+            difficulty_map = {"easy":1, "medium":2, "hard":3}
+            difficulty_value = difficulty_map.get(difficulty, 2)
 
-        # ✅ CREATE SUBJECT
-        subject, created = Subject.objects.get_or_create(
-            user=request.user,
-            name=subject_name,
-            defaults={
-                "difficulty": difficulty_value,
-                "deadline": deadline,
-                "total_topics": 10,
-                "completed_topics": 0,
-                "is_active": True
-            }
-        )
+            deadline = datetime.strptime(exam_date, "%Y-%m-%d").date()
+            min_days = 3
+            today = datetime.today().date()
 
-        # If already exists → update it
-        if not created:
-            subject.difficulty = difficulty_value
-            subject.deadline = deadline
-            subject.is_active = True
-            subject.save()
+            if (deadline - today).days < min_days:
+                deadline = today + timedelta(days=min_days)
 
-        # ✅ NOW RUN SCHEDULER
+            Subject.objects.update_or_create(
+                user=request.user,
+                name=subject_name,
+                defaults={
+                    "difficulty": difficulty_value,
+                    "deadline": deadline,
+                    "total_topics": 4 if difficulty_value == 1 else 6 if difficulty_value == 2 else 8,
+                    "completed_topics": 0,
+                    "is_active": True
+                }
+            )
+
         result = generate_plan(request.user)
-
         return JsonResponse(result)
 
     return JsonResponse({"error": "Invalid request"}, status=400)

@@ -3,24 +3,33 @@
 
 <h2>🏆 Leaderboard</h2>
 
-<div class="card">
-    <div class="flex" style="gap:10px;">
+<div class="card" style="padding:15px; margin-bottom:20px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
 
-        <select id="metricSelect" class="btn">
-            <option value="study_time">Study Time</option>
-            <option value="points">Points</option>
-            <option value="current_streak">Current Streak</option>
-            <option value="longest_streak">Longest Streak</option>
-        </select>
+    <select id="metricSelect" style="
+        padding:8px 12px;
+        border-radius:8px;
+        border:1px solid #ccc;
+    ">
+        <option value="study_time">Study Time</option>
+        <option value="points">Points</option>
+        <option value="current_streak">Current Streak</option>
+        <option value="longest_streak">Longest Streak</option>
+    </select>
 
-        <select id="modeSelect" class="btn">
-            <option value="all_time">All Time</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-        </select>
+    <select id="modeSelect" style="
+        padding:8px 12px;
+        border-radius:8px;
+        border:1px solid #ccc;
+    ">
+        <option value="all_time">All Time</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+    </select>
 
-    </div>
+</div>
+
 </div>
 
 <div id="leaderboardContainer"></div>
@@ -58,27 +67,38 @@ function loadLeaderboard() {
         .then(data => {
 
             let html = `
-                <div class="card">
-                    <h3>Top 10</h3>
+                <div class="card" style="padding:15px; margin-bottom:20px;">
+                    <h3 style="margin-bottom:15px;">🏆 Top 10</h3>
                     <div>
             `;
 
             data.top_10.forEach((entry, index) => {
 
-                let highlight = entry.username === data.current_user ? "background:#e8f5e9;" : "";
+                let highlight = entry.username === data.current_user 
+                    ? "border:2px solid #198754; background:#e8f5e9;" 
+                    : "background:#f8f9fa;";
+
+                let medal = "";
+                if (index === 0) medal = "🥇";
+                else if (index === 1) medal = "🥈";
+                else if (index === 2) medal = "🥉";
 
                 html += `
                     <div style="
-                        padding:10px;
-                        margin-bottom:6px;
-                        border-radius:8px;
-                        border:1px solid #ddd;
+                        padding:12px;
+                        margin-bottom:8px;
+                        border-radius:10px;
                         display:flex;
                         justify-content:space-between;
+                        align-items:center;
                         ${highlight}
                     ">
-                        <div>#${index+1} — ${entry.username}</div>
-                        <div>${entry.value}</div>
+                        <div>
+                            ${medal} <strong>#${index+1}</strong> — ${entry.username}
+                        </div>
+                        <div style="font-weight:bold;">
+                            ${entry.value}
+                        </div>
                     </div>
                 `;
             });
@@ -86,9 +106,9 @@ function loadLeaderboard() {
             html += `</div></div>`;
 
             html += `
-                <div class="card">
+                <div class="card" style="padding:15px;">
                     <h4>Your Rank: ${data.your_rank}</h4>
-                    <p>Your Score: ${data.your_data.value}</p>
+                    <p>Your Score: <strong>${data.your_data.value}</strong></p>
                 </div>
             `;
 

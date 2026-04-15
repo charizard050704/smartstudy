@@ -11,7 +11,7 @@ from django.utils import timezone
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-    daily_study_hours = models.FloatField(default=2.0, validators=[MinValueValidator(0.5)])
+    daily_study_hours = models.FloatField(default=5.0, validators=[MinValueValidator(0.5)])
 
     total_points = models.IntegerField(default=0)
 
